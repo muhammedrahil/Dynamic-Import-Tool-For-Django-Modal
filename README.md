@@ -145,6 +145,9 @@ def import_tool_api(request):
     thread = threading.Thread(target=dynamic_import_tool, args=(request,name,))
     thread.start()
     return Response({"msg": "Successfully Imported"}, status=status.HTTP_200_OK)
+```
 
-
+### How to set url
+```python
+    path('import_tool/',import_tool_api, name='import_tool'),
 ```
