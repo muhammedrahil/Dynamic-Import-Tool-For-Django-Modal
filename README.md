@@ -44,7 +44,7 @@ def print_response(prefix, msg, color="success"):
         print(f"{RED}{prefix} : {msg}{END_COLOR}")
     return 
 
-def old_patriot_app_import_tool(request, instence_name):
+def dynamic_import_tool(request, instence_name):
     dump_instence, Bulkdumpfiles = bulk_import_instence(instence_name)
     models = apps.get_app_config("old_patriot_app").get_models()
     models_dict = {model._meta.db_table: model for model in models}
@@ -125,4 +125,26 @@ def get_fields_db_name(model):
         else:
             bulk_dump = True
     return column_mapping, bulk_dump, decimal, date
+```
+
+### How to call dynamic_import_tool function
+```python
+
+@api_view(['POST'])
+def import_tool_api(request):
+    name = request.POST.get('name')
+    if not name:
+        return Response({"msg": "Import Name is Required"}, status=status.HTTP_400_BAD_REQUEST)
+    dump = BulkDump.objects.filter(name=name).first()
+    if not dump:
+        dump = BulkDump.objects.create(name=name)
+    files = request.FILES
+    for filename, file in files.items():
+        file_name = file.name
+        BulkDumpFiles.objects.create(file_name=file_name,file=file,bulk_dump=dump)
+    thread = threading.Thread(target=dynamic_import_tool, args=(request,name,))
+    thread.start()
+    return Response({"msg": "Successfully Imported"}, status=status.HTTP_200_OK)
+
+
 ```
